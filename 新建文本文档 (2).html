@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI视频生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        dark: '#1e1b4b',
+                        light: '#f5f3ff'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .gradient-bg {
+                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            }
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+            }
+            .animate-pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .upload-box {
+                border: 2px dashed #c7d2fe;
+                transition: all 0.3s ease;
+            }
+            .upload-box:hover {
+                border-color: #6366f1;
+                background-color: rgba(99, 102, 241, 0.05);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa fa-film text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold">AI视频生成器</h1>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#" class="hover:text-light transition-colors">首页</a>
+                <a href="#" class="hover:text-light transition-colors">教程</a>
+                <a href="#" class="hover:text-light transition-colors">帮助</a>
+            </div>
+            <button class="md:hidden text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="container mx-auto px-4 py-10">
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl card-shadow p-6 md:p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark mb-3">AI智能视频生成</h2>
+                <p class="text-gray-600">输入文本描述+上传图片，一键生成专业级视频</p>
+            </div>
+
+            <!-- 生成表单 -->
+            <form id="videoForm" class="space-y-6">
+                <!-- 文本输入区域 -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fa fa-keyboard-o mr-2 text-primary"></i>视频描述文本
+                    </label>
+                    <textarea 
+                        id="videoText" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" 
+                        rows="4" 
+                        placeholder="请输入你想要生成的视频描述内容，例如：炫酷的科技开场动画，风景如画的自然短片..."></textarea>
+                </div>
+
+                <!-- 图片上传区域 -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fa fa-image mr-2 text-primary"></i>上传参考图片
+                    </label>
+                    <div class="upload-box rounded-lg p-6 text-center cursor-pointer" id="uploadArea">
+                        <input type="file" id="imageUpload" class="hidden" accept="image/*">
+                        <div class="flex flex-col items-center">
+                            <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-500 mb-2">点击或拖拽图片到此处上传</p>
+                            <p class="text-xs text-gray-400">支持 JPG, PNG, WEBP 格式</p>
+                        </div>
+                        <div id="previewContainer" class="hidden mt-4">
+                            <img id="imagePreview" class="max-h-48 rounded-lg mx-auto" src="" alt="预览图">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 生成按钮 -->
+                <div class="text-center pt-4">
+                    <button 
+                        type="submit" 
+                        id="generateBtn"
+                        class="gradient-bg text-white px-8 py-3 rounded-lg font-medium text-lg hover:opacity-90 transition-opacity focus:ring-4 focus:ring-primary/30 flex items-center justify-center mx-auto gap-2">
+                        <i class="fa fa-magic"></i>
+                        <span>开始生成视频</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 加载动画区域 (默认隐藏) -->
+            <div id="loadingSection" class="hidden py-10 text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                </div>
+                <h3 class="text-xl font-semibold text-dark mb-2">AI正在努力生成视频中...</h3>
+                <p class="text-gray-500 mb-4">正在分析文本和图片，生成高质量视频</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 max-w-md mx-auto">
+                    <div id="progressBar" class="bg-primary h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="mt-2 text-sm text-gray-500">0%</p>
+            </div>
+
+            <!-- 视频结果区域 (默认隐藏) -->
+            <div id="resultSection" class="hidden py-6">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                        <i class="fa fa-check text-2xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-dark">视频生成成功！</h3>
+                    <p class="text-gray-500 mt-2">已根据你的文本和图片生成专属视频</p>
+                </div>
+                
+                <!-- 视频播放器 -->
+                <div class="rounded-xl overflow-hidden bg-black shadow-lg">
+                    <video id="resultVideo" class="w-full aspect-video" controls>
+                        <source src="mg.mp4" type="video/mp4">
+                        您的浏览器不支持视频播放
+                    </video>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex flex-wrap gap-4 justify-center mt-6">
+                    <button onclick="downloadVideo()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center gap-2">
+                        <i class="fa fa-download"></i> 下载视频
+                    </button>
+                    <button onclick="resetForm()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center gap-2">
+                        <i class="fa fa-refresh"></i> 重新生成
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 特性介绍 -->
+        <div class="grid md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto">
+            <div class="bg-white p-6 rounded-xl card-shadow text-center">
+                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-bolt text-white text-xl"></i>
+                </div>
+                <h3 class="font-bold text-lg mb-2">快速生成</h3>
+                <p class="text-gray-600 text-sm">AI智能算法，快速将文本和图片转为视频</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl card-shadow text-center">
+                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-cogs text-white text-xl"></i>
+                </div>
+                <h3 class="font-bold text-lg mb-2">简单易用</h3>
+                <p class="text-gray-600 text-sm">无需专业技能，三步即可生成视频</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl card-shadow text-center">
+                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-shield text-white text-xl"></i>
+                </div>
+                <h3 class="font-bold text-lg mb-2">安全可靠</h3>
+                <p class="text-gray-600 text-sm">本地处理，保护您的素材隐私</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="mt-10 bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2025 AI视频生成器 - 所有权利保留</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM元素
+        const videoForm = document.getElementById('videoForm');
+        const uploadArea = document.getElementById('uploadArea');
+        const imageUpload = document.getElementById('imageUpload');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultSection = document.getElementById('resultSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        
+        // 上传区域点击触发文件选择
+        uploadArea.addEventListener('click', () => {
+            imageUpload.click();
+        });
+
+        // 图片上传预览
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imagePreview.src = event.target.result;
+                    previewContainer.classList.remove('hidden');
+                    uploadArea.classList.add('border-primary');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 阻止拖拽默认行为
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // 处理拖拽上传
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            if (file && file.type.startsWith('image/')) {
+                imageUpload.files = dt.files;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imagePreview.src = event.target.result;
+                    previewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 表单提交 - 生成视频
+        videoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const textContent = document.getElementById('videoText').value.trim();
+            
+            // 简单验证
+            if (!textContent && !imageUpload.files.length) {
+                alert('请至少输入文本描述或上传一张图片');
+                return;
+            }
+            
+            // 显示加载区域，隐藏表单
+            videoForm.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+            
+            // 模拟进度条
+            simulateProgress();
+        });
+
+        // 模拟生成进度
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                // 随机增加进度
+                progress += Math.random() * 5;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '%';
+                
+                // 进度完成
+                if (progress === 100) {
+                    clearInterval(interval);
+                    
+                    // 延迟后显示结果
+                    setTimeout(() => {
+                        loadingSection.classList.add('hidden');
+                        resultSection.classList.remove('hidden');
+                    }, 800);
+                }
+            }, 200);
+        }
+
+        // 下载视频
+        function downloadVideo() {
+            const a = document.createElement('a');
+            a.href = 'mg.mp4';
+            a.download = 'ai生成视频.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // 重置表单
+        function resetForm() {
+            videoForm.reset();
+            previewContainer.classList.add('hidden');
+            uploadArea.classList.remove('border-primary');
+            resultSection.classList.add('hidden');
+            videoForm.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
