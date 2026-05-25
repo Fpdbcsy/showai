@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
-        // Tailwind 配置
         tailwind.config = {
             theme: {
                 extend: {
@@ -54,14 +53,6 @@
                 <i class="fa fa-film text-2xl"></i>
                 <h1 class="text-xl md:text-2xl font-bold">AI视频生成器</h1>
             </div>
-            <div class="hidden md:flex items-center gap-6">
-                <a href="#" class="hover:text-light transition-colors">首页</a>
-                <a href="#" class="hover:text-light transition-colors">教程</a>
-                <a href="#" class="hover:text-light transition-colors">帮助</a>
-            </div>
-            <button class="md:hidden text-xl">
-                <i class="fa fa-bars"></i>
-            </button>
         </div>
     </header>
 
@@ -84,7 +75,7 @@
                         id="videoText" 
                         class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" 
                         rows="4" 
-                        placeholder="请输入你想要生成的视频描述内容，例如：炫酷的科技开场动画，风景如画的自然短片..."></textarea>
+                        placeholder="请输入你想要生成的视频描述内容"></textarea>
                 </div>
 
                 <!-- 图片上传区域 -->
@@ -140,9 +131,9 @@
                     <p class="text-gray-500 mt-2">已根据你的文本和图片生成专属视频</p>
                 </div>
                 
-                <!-- 视频播放器 -->
+                <!-- 视频播放器 - 苹果修复版 -->
                 <div class="rounded-xl overflow-hidden bg-black shadow-lg">
-                    <video id="resultVideo" class="w-full aspect-video" controls>
+                    <video id="resultVideo" class="w-full aspect-video" controls playsinline webkit-playsinline>
                         <source src="mg.mp4" type="video/mp4">
                         您的浏览器不支持视频播放
                     </video>
@@ -150,48 +141,13 @@
                 
                 <!-- 操作按钮 -->
                 <div class="flex flex-wrap gap-4 justify-center mt-6">
-                    <button onclick="downloadVideo()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center gap-2">
-                        <i class="fa fa-download"></i> 下载视频
-                    </button>
                     <button onclick="resetForm()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center gap-2">
                         <i class="fa fa-refresh"></i> 重新生成
                     </button>
                 </div>
             </div>
         </div>
-
-        <!-- 特性介绍 -->
-        <div class="grid md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto">
-            <div class="bg-white p-6 rounded-xl card-shadow text-center">
-                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa fa-bolt text-white text-xl"></i>
-                </div>
-                <h3 class="font-bold text-lg mb-2">快速生成</h3>
-                <p class="text-gray-600 text-sm">AI智能算法，快速将文本和图片转为视频</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl card-shadow text-center">
-                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa fa-cogs text-white text-xl"></i>
-                </div>
-                <h3 class="font-bold text-lg mb-2">简单易用</h3>
-                <p class="text-gray-600 text-sm">无需专业技能，三步即可生成视频</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl card-shadow text-center">
-                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa fa-shield text-white text-xl"></i>
-                </div>
-                <h3 class="font-bold text-lg mb-2">安全可靠</h3>
-                <p class="text-gray-600 text-sm">本地处理，保护您的素材隐私</p>
-            </div>
-        </div>
     </main>
-
-    <!-- 页脚 -->
-    <footer class="mt-10 bg-dark text-white py-6">
-        <div class="container mx-auto px-4 text-center">
-            <p>© 2025 AI视频生成器 - 所有权利保留</p>
-        </div>
-    </footer>
 
     <script>
         // DOM元素
@@ -200,7 +156,6 @@
         const imageUpload = document.getElementById('imageUpload');
         const previewContainer = document.getElementById('previewContainer');
         const imagePreview = document.getElementById('imagePreview');
-        const generateBtn = document.getElementById('generateBtn');
         const loadingSection = document.getElementById('loadingSection');
         const resultSection = document.getElementById('resultSection');
         const progressBar = document.getElementById('progressBar');
@@ -256,17 +211,14 @@
             
             const textContent = document.getElementById('videoText').value.trim();
             
-            // 简单验证
             if (!textContent && !imageUpload.files.length) {
                 alert('请至少输入文本描述或上传一张图片');
                 return;
             }
             
-            // 显示加载区域，隐藏表单
             videoForm.classList.add('hidden');
             loadingSection.classList.remove('hidden');
             
-            // 模拟进度条
             simulateProgress();
         });
 
@@ -274,34 +226,20 @@
         function simulateProgress() {
             let progress = 0;
             const interval = setInterval(() => {
-                // 随机增加进度
                 progress += Math.random() * 5;
                 if (progress > 100) progress = 100;
                 
                 progressBar.style.width = progress + '%';
                 progressText.textContent = Math.round(progress) + '%';
                 
-                // 进度完成
                 if (progress === 100) {
                     clearInterval(interval);
-                    
-                    // 延迟后显示结果
                     setTimeout(() => {
                         loadingSection.classList.add('hidden');
                         resultSection.classList.remove('hidden');
                     }, 800);
                 }
             }, 200);
-        }
-
-        // 下载视频
-        function downloadVideo() {
-            const a = document.createElement('a');
-            a.href = 'mg.mp4';
-            a.download = 'ai生成视频.mp4';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
         }
 
         // 重置表单
